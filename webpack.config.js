@@ -10,7 +10,7 @@ module.exports = [
         filename: "main.js",
       }
     },
-    // devtool: "eval-source-map",
+    devtool: "eval-source-map",
     output: {
       path: path.resolve(__dirname, "dist"),
       clean: true
@@ -30,6 +30,7 @@ module.exports = [
         "Cross-Origin-Opener-Policy": "same-origin",
         "Cross-Origin-Embedder-Policy": "require-corp",
       },
+      port: 9091,
       hot: false
     },
   },
@@ -42,7 +43,7 @@ module.exports = [
         chunkLoading: false
       },
     },
-    // devtool: "eval-source-map",
+    devtool: "eval-source-map",
     output: {
       path: path.resolve(__dirname, "dist"),
       clean: true

@@ -33,9 +33,9 @@ pub async fn read_file(path: &str) -> String {
 
 #[wasm_bindgen]
 pub async fn run() -> Result<String, JsValue> {
-    // tokio_fs_ext::write("hello", "world".as_bytes()).await;
+    tokio_fs_ext::write("hello", "world".as_bytes()).await;
     let rt = tokio::runtime::Builder::new_multi_thread()
-        .wasm_bindgen_shim_url("http://localhost:8080/tokio_worker.js".to_string())
+        .wasm_bindgen_shim_url("http://localhost:9091/tokio_worker.js".to_string())
         .worker_threads(4)
         .build()
         .unwrap();
