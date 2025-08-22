@@ -416,15 +416,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
-name = "send_wrapper"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
-dependencies = [
- "futures-core",
-]
-
-[[package]]
 name = "sharded-slab"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -468,7 +459,7 @@ dependencies = [
 [[package]]
 name = "tokio"
 version = "1.47.1"
-source = "git+https://github.com/utooland/tokio.git#a84b182ac2d8f85c0195d9bf0161cd1299d0a40d"
+source = "git+https://github.com/utooland/tokio.git#51ca8d3309fc4ae65e3069907ba3b983c2a217be"
 dependencies = [
  "backtrace",
  "io-uring",
@@ -478,14 +469,14 @@ dependencies = [
  "slab",
  "tracing",
  "wasm_thread",
- "wasmtimer 0.4.2 (git+https://github.com/utooland/wasmtimer-rs.git)",
+ "wasmtimer",
 ]
 
 [[package]]
 name = "tokio-fs-ext"
-version = "0.3.10"
+version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3069b311a711f644e296045971579468f10207abe19a19d605f41beb166016aa"
+checksum = "04b2319ac8140aced57c6f8d9d07a0676ab594172a475bac65dbe65f2a4f9503"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -493,7 +484,6 @@ dependencies = [
  "js-sys",
  "pin-project-lite",
  "rustc-hash",
- "send_wrapper",
  "tokio",
  "tracing",
  "wasm-bindgen",
@@ -506,6 +496,7 @@ name = "tokio-on-browser"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "futures",
  "tokio",
  "tokio-fs-ext",
  "tracing",
@@ -513,7 +504,6 @@ dependencies = [
  "tracing-web",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasmtimer 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -683,26 +673,12 @@ dependencies = [
 [[package]]
 name = "wasm_thread"
 version = "0.3.3"
-source = "git+https://github.com/utooland/wasm_thread.git#8a2cc22e61b95c748703b61c99c165dd79efd07a"
+source = "git+https://github.com/utooland/wasm_thread.git#dade38bb45d588a4e914fefae5f9b9fd2267b6d1"
 dependencies = [
  "futures",
  "js-sys",
  "wasm-bindgen",
  "web-sys",
-]
-
-[[package]]
-name = "wasmtimer"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8d49b5d6c64e8558d9b1b065014426f35c18de636895d24893dbbd329743446"
-dependencies = [
- "futures",
- "js-sys",
- "parking_lot",
- "pin-utils",
- "slab",
- "wasm-bindgen",
 ]
 
 [[package]]

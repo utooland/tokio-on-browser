@@ -13,7 +13,6 @@ module.exports = [
     devtool: "eval-source-map",
     output: {
       path: path.resolve(__dirname, "dist"),
-      clean: true
     },
     plugins: [
       new HtmlWebpackPlugin({
@@ -30,8 +29,11 @@ module.exports = [
         "Cross-Origin-Opener-Policy": "same-origin",
         "Cross-Origin-Embedder-Policy": "require-corp",
       },
+      hot: false,
+      liveReload: false,
+      client: false,
+      webSocketServer: false,
       port: 9091,
-      hot: false
     },
   },
   {
@@ -46,7 +48,6 @@ module.exports = [
     devtool: "eval-source-map",
     output: {
       path: path.resolve(__dirname, "dist"),
-      clean: true
     },
   }
 ];

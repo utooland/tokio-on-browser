@@ -5,7 +5,7 @@
     "build-wasm": "cargo build --target wasm32-unknown-unknown -Z build-std=panic_abort,std",
     "bindgen-dev": "wasm-bindgen target/wasm32-unknown-unknown/wasm-dev/tokio_on_browser.wasm --out-dir js/wasm --out-name index --target web --debug --keep-debug",
     "dev": "npm run build-wasm -- --profile wasm-dev && npm run bindgen-dev",
-    "start": "webpack serve"
+    "start": "rm -rf dist && webpack serve"
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.6.0",
