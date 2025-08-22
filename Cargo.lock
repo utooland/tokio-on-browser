@@ -467,6 +467,7 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "slab",
+ "tokio-macros",
  "tracing",
  "wasm_thread",
  "wasmtimer",
@@ -474,9 +475,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-fs-ext"
-version = "0.3.11"
+version = "0.3.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04b2319ac8140aced57c6f8d9d07a0676ab594172a475bac65dbe65f2a4f9503"
+checksum = "4a00bd7f8d6f35186dc3d043d1356ae74be2a43427fa28d94f27cac6099a3b3b"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -485,10 +486,21 @@ dependencies = [
  "pin-project-lite",
  "rustc-hash",
  "tokio",
+ "tokio-stream",
  "tracing",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.5.0"
+source = "git+https://github.com/utooland/tokio.git#51ca8d3309fc4ae65e3069907ba3b983c2a217be"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -504,6 +516,17 @@ dependencies = [
  "tracing-web",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "tokio-stream"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eca58d7bba4a75707817a2c44174253f9236b2d5fbd055602e9d5c07c139a047"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
 ]
 
 [[package]]
