@@ -17,7 +17,7 @@ use futures::FutureExt;
 use tokio::{runtime, task_local, time::Instant};
 use tokio_fs_ext::{
     create_dir_all,
-    offload::{self, FsOffload},
+    offload::{self, FsOffload, FsOffloadDefault},
     read_to_string, write,
 };
 use tracing_subscriber::{
@@ -58,12 +58,12 @@ pub async fn run() -> Result<String, JsValue> {
 
     tokio_fs_ext::write(&path, "world d d d d".as_bytes()).await;
 
-    let (fs_actor, fs_actor_handle) = offload::FsActor::create();
+    let (fs_server, fs_client) = offload::offload();
 
     let path_cloned = path.clone();
     let path_cloned_cloned = path.clone();
-    let fs_actor_handle_cloned = fs_actor_handle.clone();
-    let wrap = TOKIO_RUNTIME.spawn(async move {
+    let fs_client_cloned = fs_client.clone();
+    let tokio_task = TOKIO_RUNTIME.spawn(async move {
         let scoped_task = tokio::spawn(async move {
             // Ensure tokio::task::LocalKey::scope worked
             TT.scope(1, async move {
@@ -71,7 +71,7 @@ pub async fn run() -> Result<String, JsValue> {
 
                     let ret = unsafe {
                         String::from_utf8_unchecked(
-                            fs_actor_handle_cloned.read(path_cloned_cloned.clone().into()).await.unwrap(),
+                            fs_client_cloned.read(path_cloned_cloned.clone().into()).await.unwrap(),
                         )
                     };
 
@@ -86,7 +86,8 @@ pub async fn run() -> Result<String, JsValue> {
         });
 
         let path_cloned = path_cloned.clone();
-        let fs_actor_handle = fs_actor_handle.clone();
+
+        let fs_client = fs_client.clone();
 
         let normal_task = tokio::task::spawn( async move {
             let path_cloned = path_cloned.clone();
@@ -94,7 +95,7 @@ pub async fn run() -> Result<String, JsValue> {
 
             let ret = unsafe {
                 String::from_utf8_unchecked(
-                    fs_actor_handle.read(path_cloned.into()).await.unwrap(),
+                    fs_client.read(path_cloned.into()).await.unwrap(),
                 )
             };
 
@@ -123,14 +124,14 @@ pub async fn run() -> Result<String, JsValue> {
     });
 
     let (ret, _) = futures::future::join(
-        wrap,
+        tokio_task,
         // start the fs_actor, because calling the opfs api in tokio runtime will
         // cause hanging forever, the reason is that, calling betweean worker threads
         // on browser is scheduled in browser's event loop, but tokio runtime worker will
         // blocking or park the thread, so the browser's event loop will be blocked.
         // See: https://github.com/tokio-rs/tokio/blob/925c614c89d0a26777a334612e2ed6ad0e7935c3/tokio/src/runtime/scheduler/multi_thread/worker.rs#L524:L567
         // and https://github.com/chemicstry/wasm_thread/blob/7ec48686bb1a0d9bd42cf16e46622746e4d12ab3/README.md?plain=1#L22:L26
-        fs_actor.run(),
+        fs_server.bind(FsOffloadDefault),
     )
     .await;
 

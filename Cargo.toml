@@ -17,7 +17,7 @@ tokio = { version = "1.47.1", features = [
   "macros",
   "tracing",
 ] }
-tokio-fs-ext = "0.3.12"
+tokio-fs-ext = "0.4.0"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-web = "0.1.3"
 tracing = "0.1.41"
