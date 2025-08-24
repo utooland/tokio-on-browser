@@ -61,7 +61,7 @@ pub async fn run() -> Result<String, String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    let (fs_server, fs_client_0) = offload::split();
+    let (mut fs_server, fs_client_0) = offload::split();
 
     let fs_client_1 = fs_client_0.clone();
     let fs_client_2 = fs_client_0.clone();
