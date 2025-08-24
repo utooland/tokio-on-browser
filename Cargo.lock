@@ -696,7 +696,7 @@ dependencies = [
 [[package]]
 name = "wasm_thread"
 version = "0.3.3"
-source = "git+https://github.com/utooland/wasm_thread.git#dade38bb45d588a4e914fefae5f9b9fd2267b6d1"
+source = "git+https://github.com/utooland/wasm_thread.git#94438ff771ee0a6a55d79e49a655707970acb615"
 dependencies = [
  "futures",
  "js-sys",
