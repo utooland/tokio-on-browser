@@ -140,7 +140,7 @@ pub async fn run() -> Result<String, String> {
     let (ret, _) = futures::future::join(
         tokio_task,
         // start the fs_actor, because calling the opfs api in tokio runtime will
-        // cause hanging forever, the reason is that, calling betweean worker threads
+        // cause hanging forever, the reason is that, calling between worker threads
         // on browser is scheduled in browser's event loop, but tokio runtime worker will
         // blocking or park the thread, so the browser's event loop will be blocked.
         // See: https://github.com/tokio-rs/tokio/blob/925c614c89d0a26777a334612e2ed6ad0e7935c3/tokio/src/runtime/scheduler/multi_thread/worker.rs#L524:L567
