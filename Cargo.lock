@@ -465,7 +465,7 @@ dependencies = [
 [[package]]
 name = "tokio"
 version = "1.47.1"
-source = "git+https://github.com/utooland/tokio.git#f7a655259439f28f84399bb522d1d98d9967f565"
+source = "git+https://github.com/utooland/tokio.git#0b9f7720e2b65634e0fb7d7d8be9073fc21d96a1"
 dependencies = [
  "backtrace",
  "io-uring",
@@ -502,7 +502,7 @@ dependencies = [
 [[package]]
 name = "tokio-macros"
 version = "2.5.0"
-source = "git+https://github.com/utooland/tokio.git#f7a655259439f28f84399bb522d1d98d9967f565"
+source = "git+https://github.com/utooland/tokio.git#0b9f7720e2b65634e0fb7d7d8be9073fc21d96a1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -703,7 +703,7 @@ dependencies = [
 [[package]]
 name = "wasm_thread"
 version = "0.3.3"
-source = "git+https://github.com/utooland/wasm_thread.git#94438ff771ee0a6a55d79e49a655707970acb615"
+source = "git+https://github.com/utooland/wasm_thread.git#1155d645aedfdbe55f8ea336a9e8a8150239beb0"
 dependencies = [
  "futures",
  "js-sys",

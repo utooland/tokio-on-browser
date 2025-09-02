@@ -124,10 +124,10 @@ pub async fn run() -> Result<String, String> {
 
         // Ensure tokio::task::spawn blocking worked
         let _ = tokio::join!(
-            tokio::task::spawn(blocking_task(40, 40)),
-            tokio::task::spawn(blocking_task(20, 20)),
-            tokio::task::spawn(blocking_task(10, 10)),
-            tokio::task::spawn(blocking_task(30, 30)),
+            tokio::task::spawn_blocking(|| blocking_task(40, 40)),
+            tokio::task::spawn_blocking(|| blocking_task(20, 20)),
+            tokio::task::spawn_blocking(|| blocking_task(10, 10)),
+            tokio::task::spawn_blocking(|| blocking_task(30, 30)),
         );
 
         let (ret_1, ret_2) = tokio::join!(
@@ -222,7 +222,7 @@ async fn write_and_read_test(fs_client: offload::Client, dir: &str) -> Result<St
     Ok(ret)
 }
 
-async fn blocking_task(id: u32, n: u64) {
+fn blocking_task(id: u32, n: u64) {
     let tokio_handle_id = tokio::runtime::Handle::current().id();
     tracing::info!(
         "[Task {}] Starting blocking task in tokio worker {}...",

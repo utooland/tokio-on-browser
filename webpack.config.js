@@ -10,7 +10,7 @@ module.exports = [
         filename: "main.js",
       }
     },
-    devtool: "eval-source-map",
+    devtool: "cheap-module-source-map",
     output: {
       path: path.resolve(__dirname, "dist"),
     },
@@ -45,7 +45,7 @@ module.exports = [
         chunkLoading: false
       },
     },
-    devtool: "eval-source-map",
+    devtool: "cheap-module-source-map",
     output: {
       path: path.resolve(__dirname, "dist"),
     },
