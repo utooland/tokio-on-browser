@@ -70,6 +70,12 @@ pub async fn run() -> Result<String, String> {
 
     // Clone once to pass owned copies to the main Tokio task
     let tokio_task = TOKIO_RUNTIME.spawn(async move {
+        fs_client_0
+            .watch_dir("/", true, |event| {
+                tokio_fs_ext::console::log!("fs_event: {event:?}")
+            })
+            .await
+            .unwrap();
         let fs_client = fs_client_0;
         // Clone for the scoped task
         let scoped_task = tokio::spawn(async move {

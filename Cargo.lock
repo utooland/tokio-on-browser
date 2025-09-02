@@ -255,6 +255,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "notify-types"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e0826a989adedc2a244799e823aece04662b66609d96af8dff7ac6df9a8925d"
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -459,7 +465,7 @@ dependencies = [
 [[package]]
 name = "tokio"
 version = "1.47.1"
-source = "git+https://github.com/utooland/tokio.git#51ca8d3309fc4ae65e3069907ba3b983c2a217be"
+source = "git+https://github.com/utooland/tokio.git#f7a655259439f28f84399bb522d1d98d9967f565"
 dependencies = [
  "backtrace",
  "io-uring",
@@ -475,19 +481,19 @@ dependencies = [
 
 [[package]]
 name = "tokio-fs-ext"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18c1fdbd47c3cad0bde5dd73610c1e0b30b24ed01ed0f6918fef3bfaf41916d5"
+checksum = "87223f929731a8c553fc96b4fe4799eaca35e22b7e6a7aab420093cfaa96b930"
 dependencies = [
  "bitflags",
  "cfg-if",
  "futures",
  "js-sys",
+ "notify-types",
  "pin-project-lite",
  "rustc-hash",
  "tokio",
  "tokio-stream",
- "tracing",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -496,7 +502,7 @@ dependencies = [
 [[package]]
 name = "tokio-macros"
 version = "2.5.0"
-source = "git+https://github.com/utooland/tokio.git#51ca8d3309fc4ae65e3069907ba3b983c2a217be"
+source = "git+https://github.com/utooland/tokio.git#f7a655259439f28f84399bb522d1d98d9967f565"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -516,6 +522,7 @@ dependencies = [
  "tracing-web",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -706,8 +713,9 @@ dependencies = [
 
 [[package]]
 name = "wasmtimer"
-version = "0.4.2"
-source = "git+https://github.com/utooland/wasmtimer-rs.git#55ad34a6d1475eb3affa7c92e7a933068cbfe609"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c598d6b99ea013e35844697fc4670d08339d5cda15588f193c6beedd12f644b"
 dependencies = [
  "futures",
  "js-sys",
