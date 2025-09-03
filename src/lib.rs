@@ -55,7 +55,7 @@ const SOMETHING: &str = " s o m e t h i n g ";
 
 #[wasm_bindgen]
 pub async fn run() -> Result<String, String> {
-    tracing::info!("start task");
+    tracing::info!("start task in thread {:?}", std::thread::current().id());
 
     tokio_fs_ext::write(HELLO_PATH, "world d d d d".as_bytes())
         .await
