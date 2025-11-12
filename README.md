@@ -10,5 +10,3 @@ npm run install-toolchain
 npm run dev
 npm run start
 ```
-
-Now, tokio::task::spawn_blocking not worked.
