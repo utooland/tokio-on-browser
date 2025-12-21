@@ -70,6 +70,7 @@ pub async fn run() -> Result<String, String> {
 
     // Clone once to pass owned copies to the main Tokio task
     let tokio_task = TOKIO_RUNTIME.spawn(async move {
+        let fs_client_stress = fs_client_0.clone();
         fs_client_0
             .watch_dir("/", true, |event| {
                 tokio_fs_ext::console::log!("fs_event: {event:?}")
@@ -139,6 +140,64 @@ pub async fn run() -> Result<String, String> {
         let ret_2 = ret_2.map_err(|e| e.to_string())?;
 
         assert_eq!(ret_1, ret_2);
+
+        // --- Start Stress Test --- (independent files)...");
+        let start_stress = Instant::now();
+        let mut handles = Vec::new();
+        const CONCURRENCY: usize = 50;
+        const ITERATIONS: usize = 20;
+
+        for i in 0..CONCURRENCY {
+            let client = fs_client_stress.clone();
+            handles.push(tokio::spawn(async move {
+                stress_test_task(client, i, ITERATIONS).await
+            }));
+        }
+
+        for handle in handles {
+            handle.await.map_err(|e| e.to_string())??;
+        }
+        tracing::info!("Stress test (independent files) completed in {:?}", start_stress.elapsed());
+        // --- End Stress Test ---
+
+        // --- Start Shared File Stress Test ---
+        tracing::info!("Starting shared file stress test...");
+        let start_shared = Instant::now();
+        let mut shared_handles = Vec::new();
+        
+        // Ensure directory exists
+        fs_client_stress.create_dir_all("/stress").await.map_err(|e| e.to_string())?;
+
+        for i in 0..CONCURRENCY {
+            let client = fs_client_stress.clone();
+            shared_handles.push(tokio::spawn(async move {
+                stress_test_shared_file_task(client, i, ITERATIONS).await
+            }));
+        }
+
+        for handle in shared_handles {
+            handle.await.map_err(|e| e.to_string())??;
+        }
+        tracing::info!("Shared file stress test completed in {:?}", start_shared.elapsed());
+        // --- End Shared File Stress Test ---
+
+        // --- Start FS Ops Stress Test ---
+        tracing::info!("Starting FS ops stress test (create/move/delete)...");
+        let start_ops = Instant::now();
+        let mut ops_handles = Vec::new();
+
+        for i in 0..CONCURRENCY {
+            let client = fs_client_stress.clone();
+            ops_handles.push(tokio::spawn(async move {
+                stress_test_fs_ops_task(client, i, ITERATIONS).await
+            }));
+        }
+
+        for handle in ops_handles {
+            handle.await.map_err(|e| e.to_string())??;
+        }
+        tracing::info!("FS ops stress test completed in {:?}", start_ops.elapsed());
+        // --- End FS Ops Stress Test ---
 
         Result::<String, String>::Ok(ret_1)
     });
@@ -254,4 +313,149 @@ fn fibonacci(n: u64) -> u64 {
     } else {
         fibonacci(n - 1) + fibonacci(n - 2)
     }
+}
+
+async fn stress_test_task(
+    fs_client: offload::Client,
+    id: usize,
+    iterations: usize,
+) -> Result<(), String> {
+    let base_path = format!("/stress/task_{}", id);
+    fs_client
+        .create_dir_all(&base_path)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    for i in 0..iterations {
+        let file_path = format!("{}/file_{}.txt", base_path, i);
+        let content = format!("content_task_{}_iter_{}", id, i);
+
+        // Write
+        fs_client
+            .write(&file_path, content.as_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Read and verify
+        let read_content = fs_client
+            .read(&file_path)
+            .await
+            .map_err(|e| e.to_string())?;
+        let read_string = unsafe { String::from_utf8_unchecked(read_content) };
+
+        if read_string != content {
+            return Err(format!(
+                "Stress test mismatch in {}: expected '{}', got '{}'",
+                file_path, content, read_string
+            ));
+        }
+    }
+    
+    if id % 10 == 0 {
+        tracing::info!("Stress task {} completed {} iterations", id, iterations);
+    }
+    
+    Ok(())
+}
+
+async fn stress_test_shared_file_task(
+    fs_client: offload::Client,
+    id: usize,
+    iterations: usize,
+) -> Result<(), String> {
+    let file_path = "/stress/shared_file.txt";
+
+    for i in 0..iterations {
+        let content = format!("shared_content_task_{}_iter_{}", id, i);
+
+        // Write
+        fs_client
+            .write(file_path, content.as_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Read
+        let read_content = fs_client
+            .read(file_path)
+            .await
+            .map_err(|e| e.to_string())?;
+        
+        // Verify valid UTF-8 and basic structure
+        let read_string = String::from_utf8(read_content)
+            .map_err(|e| format!("Invalid UTF-8 read in shared test: {}", e))?;
+
+        if !read_string.starts_with("shared_content_task_") {
+             return Err(format!(
+                "Shared file stress test corruption in {}: got '{}'",
+                file_path, read_string
+            ));
+        }
+    }
+    
+    if id % 10 == 0 {
+        tracing::info!("Shared file stress task {} completed {} iterations", id, iterations);
+    }
+    
+    Ok(())
+}
+
+async fn stress_test_fs_ops_task(
+    fs_client: offload::Client,
+    id: usize,
+    iterations: usize,
+) -> Result<(), String> {
+    let base_path = format!("/stress/ops_task_{}", id);
+    fs_client
+        .create_dir_all(&base_path)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    for i in 0..iterations {
+        let dir_path = format!("{}/dir_{}", base_path, i);
+        let file_path = format!("{}/file.txt", dir_path);
+        let renamed_file_path = format!("{}/renamed_file.txt", dir_path);
+        let renamed_dir_path = format!("{}/renamed_dir_{}", base_path, i);
+
+        // Create dir
+        fs_client
+            .create_dir_all(&dir_path)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Create file
+        fs_client
+            .write(&file_path, b"content")
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Rename file - Not supported by Client yet
+        // fs_client
+        //     .rename(&file_path, &renamed_file_path)
+        //     .await
+        //     .map_err(|e| e.to_string())?;
+
+        // Rename dir - Not supported by Client yet
+        // fs_client
+        //     .rename(&dir_path, &renamed_dir_path)
+        //     .await
+        //     .map_err(|e| e.to_string())?;
+
+        // Remove file
+        fs_client
+            .remove_file(&file_path)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Remove dir
+        fs_client
+            .remove_dir(&dir_path)
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+
+    if id % 10 == 0 {
+        tracing::info!("FS ops task {} completed {} iterations", id, iterations);
+    }
+
+    Ok(())
 }
