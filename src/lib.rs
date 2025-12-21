@@ -199,6 +199,24 @@ pub async fn run() -> Result<String, String> {
         tracing::info!("FS ops stress test completed in {:?}", start_ops.elapsed());
         // --- End FS Ops Stress Test ---
 
+        // --- Start Race Condition Stress Test ---
+        tracing::info!("Starting race condition stress test (same file create/delete/write)...");
+        let start_race = Instant::now();
+        let mut race_handles = Vec::new();
+
+        for i in 0..CONCURRENCY {
+            let client = fs_client_stress.clone();
+            race_handles.push(tokio::spawn(async move {
+                stress_test_race_condition_task(client, i, ITERATIONS).await
+            }));
+        }
+
+        for handle in race_handles {
+            handle.await.map_err(|e| e.to_string())??;
+        }
+        tracing::info!("Race condition stress test completed in {:?}", start_race.elapsed());
+        // --- End Race Condition Stress Test ---
+
         Result::<String, String>::Ok(ret_1)
     });
 
@@ -457,5 +475,39 @@ async fn stress_test_fs_ops_task(
         tracing::info!("FS ops task {} completed {} iterations", id, iterations);
     }
 
+    Ok(())
+}
+
+async fn stress_test_race_condition_task(
+    fs_client: offload::Client,
+    id: usize,
+    iterations: usize,
+) -> Result<(), String> {
+    let file_path = "/stress/race_file.txt";
+
+    for i in 0..iterations {
+        let content = format!("race_content_{}_{}", id, i);
+
+        // Try to write (Create or Modify)
+        if let Err(e) = fs_client.write(file_path, content.as_bytes()).await {
+            // Log error but continue to keep the pressure on
+            tracing::warn!("Race write error task {}: {}", id, e);
+        }
+
+        // Try to read
+        if let Err(e) = fs_client.read(file_path).await {
+             tracing::warn!("Race read error task {}: {}", id, e);
+        }
+
+        // Try to remove
+        if let Err(e) = fs_client.remove_file(file_path).await {
+             tracing::warn!("Race remove error task {}: {}", id, e);
+        }
+    }
+    
+    if id % 10 == 0 {
+        tracing::info!("Race condition task {} completed {} iterations", id, iterations);
+    }
+    
     Ok(())
 }
