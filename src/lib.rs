@@ -54,7 +54,8 @@ const HELLO_PATH: &str = "hello";
 const SOMETHING: &str = " s o m e t h i n g ";
 
 #[wasm_bindgen]
-pub async fn run() -> Result<String, String> {
+pub async fn run(stress_test_iterations: Option<usize>) -> Result<String, String> {
+    let stress_test_iterations = stress_test_iterations.unwrap_or(0);
     tracing::info!("start task in thread {:?}", std::thread::current().id());
 
     tokio_fs_ext::write(HELLO_PATH, "world d d d d".as_bytes())
@@ -77,147 +78,21 @@ pub async fn run() -> Result<String, String> {
             })
             .await
             .unwrap();
-        let fs_client = fs_client_0;
-        // Clone for the scoped task
-        let scoped_task = tokio::spawn(async move {
-            // Ensure tokio::task::LocalKey::scope worked
-            TT.scope(1, async move {
-                let ret = fs_client
-                    .read(HELLO_PATH)
-                    .await
-                    .map(|buf| unsafe { String::from_utf8_unchecked(buf) })
-                    .map_err(|e| e.to_string())?;
 
-                let thread_id = std::thread::current().id();
-                tracing::info!(
-                    "read_to_string {:?} {} in tokio worker thread: {:?}",
-                    HELLO_PATH,
-                    ret,
-                    thread_id
-                );
-                Result::<String, String>::Ok(ret)
-            })
-            .await
-        });
+        let ret = run_basic_tests(
+            fs_client_0,
+            fs_client_1,
+            fs_client_2,
+            fs_client_3,
+            fs_client_4,
+        )
+        .await?;
 
-        tokio::join!(
-            write_and_read_test(fs_client_1, "/1/1"),
-            write_and_read_test(fs_client_2, "/2/2"),
-            write_and_read_test(fs_client_3, "/3/3")
-        );
-
-        let normal_task = tokio::task::spawn(async move {
-            let ret = fs_client_4
-                .read(HELLO_PATH)
-                .await
-                .map(|buf| unsafe { String::from_utf8_unchecked(buf) })
-                .map_err(|e| e.to_string())?;
-
-            let thread_id = std::thread::current().id();
-            tracing::info!(
-                "read_to_string {:?} {} in tokio worker thread: {:?}",
-                HELLO_PATH,
-                ret,
-                thread_id
-            );
-            Result::<String, String>::Ok(ret)
-        });
-
-        // Ensure tokio::task::spawn blocking worked
-        let _ = tokio::join!(
-            tokio::task::spawn_blocking(|| blocking_task(40, 40)),
-            tokio::task::spawn_blocking(|| blocking_task(20, 20)),
-            tokio::task::spawn_blocking(|| blocking_task(10, 10)),
-            tokio::task::spawn_blocking(|| blocking_task(30, 30)),
-        );
-
-        let (ret_1, ret_2) = tokio::join!(
-            async { scoped_task.await.map_err(|e| e.to_string())? },
-            async { normal_task.await.map_err(|e| e.to_string())? }
-        );
-
-        let ret_1 = ret_1.map_err(|e| e.to_string())?;
-        let ret_2 = ret_2.map_err(|e| e.to_string())?;
-
-        assert_eq!(ret_1, ret_2);
-
-        // --- Start Stress Test --- (independent files)...");
-        let start_stress = Instant::now();
-        let mut handles = Vec::new();
-        const CONCURRENCY: usize = 50;
-        const ITERATIONS: usize = 20;
-
-        for i in 0..CONCURRENCY {
-            let client = fs_client_stress.clone();
-            handles.push(tokio::spawn(async move {
-                stress_test_task(client, i, ITERATIONS).await
-            }));
+        if stress_test_iterations > 0 {
+            run_stress_tests(fs_client_stress, stress_test_iterations).await?;
         }
 
-        for handle in handles {
-            handle.await.map_err(|e| e.to_string())??;
-        }
-        tracing::info!("Stress test (independent files) completed in {:?}", start_stress.elapsed());
-        // --- End Stress Test ---
-
-        // --- Start Shared File Stress Test ---
-        tracing::info!("Starting shared file stress test...");
-        let start_shared = Instant::now();
-        let mut shared_handles = Vec::new();
-        
-        // Ensure directory exists
-        fs_client_stress.create_dir_all("/stress").await.map_err(|e| e.to_string())?;
-
-        for i in 0..CONCURRENCY {
-            let client = fs_client_stress.clone();
-            shared_handles.push(tokio::spawn(async move {
-                stress_test_shared_file_task(client, i, ITERATIONS).await
-            }));
-        }
-
-        for handle in shared_handles {
-            handle.await.map_err(|e| e.to_string())??;
-        }
-        tracing::info!("Shared file stress test completed in {:?}", start_shared.elapsed());
-        // --- End Shared File Stress Test ---
-
-        // --- Start FS Ops Stress Test ---
-        tracing::info!("Starting FS ops stress test (create/move/delete)...");
-        let start_ops = Instant::now();
-        let mut ops_handles = Vec::new();
-
-        for i in 0..CONCURRENCY {
-            let client = fs_client_stress.clone();
-            ops_handles.push(tokio::spawn(async move {
-                stress_test_fs_ops_task(client, i, ITERATIONS).await
-            }));
-        }
-
-        for handle in ops_handles {
-            handle.await.map_err(|e| e.to_string())??;
-        }
-        tracing::info!("FS ops stress test completed in {:?}", start_ops.elapsed());
-        // --- End FS Ops Stress Test ---
-
-        // --- Start Race Condition Stress Test ---
-        tracing::info!("Starting race condition stress test (same file create/delete/write)...");
-        let start_race = Instant::now();
-        let mut race_handles = Vec::new();
-
-        for i in 0..CONCURRENCY {
-            let client = fs_client_stress.clone();
-            race_handles.push(tokio::spawn(async move {
-                stress_test_race_condition_task(client, i, ITERATIONS).await
-            }));
-        }
-
-        for handle in race_handles {
-            handle.await.map_err(|e| e.to_string())??;
-        }
-        tracing::info!("Race condition stress test completed in {:?}", start_race.elapsed());
-        // --- End Race Condition Stress Test ---
-
-        Result::<String, String>::Ok(ret_1)
+        Result::<String, String>::Ok(ret)
     });
 
     let (ret, _) = futures::future::join(
@@ -237,6 +112,163 @@ pub async fn run() -> Result<String, String> {
     tracing::info!("read_to_string end {:?} {}", HELLO_PATH, ret);
 
     Ok(ret)
+}
+
+async fn run_basic_tests(
+    fs_client_0: offload::Client,
+    fs_client_1: offload::Client,
+    fs_client_2: offload::Client,
+    fs_client_3: offload::Client,
+    fs_client_4: offload::Client,
+) -> Result<String, String> {
+    // Clone for the scoped task
+    let scoped_task = tokio::spawn(async move {
+        // Ensure tokio::task::LocalKey::scope worked
+        TT.scope(1, async move {
+            let ret = fs_client_0
+                .read(HELLO_PATH)
+                .await
+                .map(|buf| unsafe { String::from_utf8_unchecked(buf) })
+                .map_err(|e| e.to_string())?;
+
+            let thread_id = std::thread::current().id();
+            tracing::info!(
+                "read_to_string {:?} {} in tokio worker thread: {:?}",
+                HELLO_PATH,
+                ret,
+                thread_id
+            );
+            Result::<String, String>::Ok(ret)
+        })
+        .await
+    });
+
+    tokio::join!(
+        write_and_read_test(fs_client_1, "/1/1"),
+        write_and_read_test(fs_client_2, "/2/2"),
+        write_and_read_test(fs_client_3, "/3/3")
+    );
+
+    let normal_task = tokio::task::spawn(async move {
+        let ret = fs_client_4
+            .read(HELLO_PATH)
+            .await
+            .map(|buf| unsafe { String::from_utf8_unchecked(buf) })
+            .map_err(|e| e.to_string())?;
+
+        let thread_id = std::thread::current().id();
+        tracing::info!(
+            "read_to_string {:?} {} in tokio worker thread: {:?}",
+            HELLO_PATH,
+            ret,
+            thread_id
+        );
+        Result::<String, String>::Ok(ret)
+    });
+
+    // Ensure tokio::task::spawn blocking worked
+    let _ = tokio::join!(
+        tokio::task::spawn_blocking(|| blocking_task(40, 40)),
+        tokio::task::spawn_blocking(|| blocking_task(20, 20)),
+        tokio::task::spawn_blocking(|| blocking_task(10, 10)),
+        tokio::task::spawn_blocking(|| blocking_task(30, 30)),
+    );
+
+    let (ret_1, ret_2) = tokio::join!(
+        async { scoped_task.await.map_err(|e| e.to_string())? },
+        async { normal_task.await.map_err(|e| e.to_string())? }
+    );
+
+    let ret_1 = ret_1.map_err(|e| e.to_string())?;
+    let ret_2 = ret_2.map_err(|e| e.to_string())?;
+
+    assert_eq!(ret_1, ret_2);
+
+    Ok(ret_1)
+}
+
+async fn run_stress_tests(
+    fs_client_stress: offload::Client,
+    stress_test_iterations: usize,
+) -> Result<(), String> {
+    const CONCURRENCY: usize = 50;
+
+    // Independent files stress test
+    run_concurrent_stress_test(
+        "Stress test (independent files)",
+        fs_client_stress.clone(),
+        CONCURRENCY,
+        stress_test_iterations,
+        stress_test_task,
+    )
+    .await?;
+
+    // Shared file stress test
+    // Ensure directory exists
+    fs_client_stress
+        .create_dir_all("/stress")
+        .await
+        .map_err(|e| e.to_string())?;
+
+    run_concurrent_stress_test(
+        "Shared file stress test",
+        fs_client_stress.clone(),
+        CONCURRENCY,
+        stress_test_iterations,
+        stress_test_shared_file_task,
+    )
+    .await?;
+
+    // FS ops stress test
+    run_concurrent_stress_test(
+        "FS ops stress test (create/move/delete)",
+        fs_client_stress.clone(),
+        CONCURRENCY,
+        stress_test_iterations,
+        stress_test_fs_ops_task,
+    )
+    .await?;
+
+    // Race condition stress test
+    run_concurrent_stress_test(
+        "Race condition stress test (same file create/delete/write)",
+        fs_client_stress.clone(),
+        CONCURRENCY,
+        stress_test_iterations,
+        stress_test_race_condition_task,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn run_concurrent_stress_test<F, Fut>(
+    test_name: &str,
+    fs_client: offload::Client,
+    concurrency: usize,
+    iterations: usize,
+    task_fn: F,
+) -> Result<(), String>
+where
+    F: Fn(offload::Client, usize, usize) -> Fut + Send + Sync + Copy + 'static,
+    Fut: Future<Output = Result<(), String>> + Send + 'static,
+{
+    tracing::info!("Starting {}...", test_name);
+    let start = Instant::now();
+    let mut handles = Vec::new();
+
+    for i in 0..concurrency {
+        let client = fs_client.clone();
+        handles.push(tokio::spawn(async move {
+            task_fn(client, i, iterations).await
+        }));
+    }
+
+    for handle in handles {
+        handle.await.map_err(|e| e.to_string())??;
+    }
+    tracing::info!("{} completed in {:?}", test_name, start.elapsed());
+    Ok(())
 }
 
 #[wasm_bindgen(start)]
@@ -484,18 +516,28 @@ async fn stress_test_race_condition_task(
     iterations: usize,
 ) -> Result<(), String> {
     let file_path = "/stress/race_file.txt";
+    // Increase content size to hold the lock longer (10KB)
+    let large_content = "a".repeat(1024 * 10);
 
     for i in 0..iterations {
-        let content = format!("race_content_{}_{}", id, i);
+        let content = format!("race_content_{}_{}_{}", id, i, large_content);
 
-        // Try to write (Create or Modify)
-        if let Err(e) = fs_client.write(file_path, content.as_bytes()).await {
+        let client_write = fs_client.clone();
+        let client_read = fs_client.clone();
+
+        // Try to write and read concurrently to trigger lock contention (Permission Denied)
+        // This simulates the scenario where a handle is not yet released when another operation starts.
+        let (write_res, read_res) = tokio::join!(
+            client_write.write(file_path, content.as_bytes()),
+            client_read.read(file_path)
+        );
+
+        if let Err(e) = write_res {
             // Log error but continue to keep the pressure on
             tracing::warn!("Race write error task {}: {}", id, e);
         }
 
-        // Try to read
-        if let Err(e) = fs_client.read(file_path).await {
+        if let Err(e) = read_res {
              tracing::warn!("Race read error task {}: {}", id, e);
         }
 
