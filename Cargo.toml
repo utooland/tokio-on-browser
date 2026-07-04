@@ -10,7 +10,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 console_error_panic_hook = { version = "0.1.7" }
 futures = "0.3.31"
-mimalloc = { version = "0.1.48", features = ["extended", "v3"] }
 tokio = { version = "1.47.1", features = [
   "macros",
   "rt",
@@ -27,8 +26,6 @@ wasm-bindgen-futures = "=0.4.58"
 web-sys = { version = "=0.3.85", features = ["console"] }
 
 [patch.crates-io]
-libmimalloc-sys = { git = "https://github.com/utooland/mimalloc_rust.git" }
-mimalloc = { git = "https://github.com/utooland/mimalloc_rust.git" }
 tokio = { git = "https://github.com/utooland/tokio.git" }
 
 [profile.wasm-dev]
