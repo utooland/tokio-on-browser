@@ -12,11 +12,13 @@ Rust std builds.
 
 ## Regression trigger
 
-This repo worked before upgrading the Rust toolchain from
-`nightly-2025-06-04` to `nightly-2026-05-15`. The upgrade changed the Rust std
-wasm allocator dependency from `dlmalloc 0.2.8` to `dlmalloc 0.2.13`.
+The known working baseline is the Rust toolchain used by the sibling `utoo`
+repo: `nightly-2026-04-02` (`rustc 1.96.0-nightly 7e46c5f6f
+2026-04-01`). The regression is observed after upgrading to
+`nightly-2026-05-15`. That upgrade changed the Rust std wasm allocator
+dependency from `dlmalloc 0.2.11` to `dlmalloc 0.2.13`.
 
-The old `dlmalloc 0.2.8` wasm allocator only allocated through `memory.grow`.
+The old `dlmalloc 0.2.11` wasm allocator only allocated through `memory.grow`.
 The new `dlmalloc 0.2.13` wasm allocator first tries to donate the
 linker-provided preexisting heap range bounded by `__heap_base` and
 `__heap_end`, then falls back to `memory.grow`.
