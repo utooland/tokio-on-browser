@@ -1,9 +1,11 @@
 {
   "name": "tokio-on-browser",
   "scripts": {
-    "install-toolchain": "cargo install wasm-bindgen-cli && brew install binaryen",
+    "install-toolchain": "cargo install wasm-bindgen-cli@0.2.108 && brew install binaryen",
     "build-wasm": "cargo build --target wasm32-unknown-unknown -Z build-std=panic_abort,std",
-    "bindgen-dev": "wasm-bindgen target/wasm32-unknown-unknown/wasm-dev/tokio_on_browser.wasm --out-dir js/wasm --out-name index --target web --debug --keep-debug",
+    "bindgen-dev:raw": "wasm-bindgen target/wasm32-unknown-unknown/wasm-dev/tokio_on_browser.wasm --out-dir js/wasm --out-name index --target web --debug --keep-debug",
+    "bindgen-dev": "npm run bindgen-dev:raw && node scripts/fix-wasm-bindgen-thread-page.mjs js/wasm/index_bg.wasm",
+    "dev:raw": "rm -rf js/wasm && npm run build-wasm -- --profile wasm-dev && npm run bindgen-dev:raw",
     "dev": "rm -rf js/wasm && npm run build-wasm -- --profile wasm-dev && npm run bindgen-dev",
     "start": "rm -rf dist && webpack serve"
   },

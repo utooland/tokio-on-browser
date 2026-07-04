@@ -1,3 +1,5 @@
-import initWasm from "./wasm";
+import { initSync } from "./wasm";
 
-self.wasm_bindgen = initWasm;
+self.wasm_bindgen = (module, memory) => {
+  return initSync({ module, memory });
+};

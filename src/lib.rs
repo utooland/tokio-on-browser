@@ -28,6 +28,9 @@ use tracing_subscriber::{
 use tracing_web::MakeWebConsoleWriter;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
+#[global_allocator]
+static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[wasm_bindgen]
 pub async fn mkdir(path: &str) -> Result<(), JsValue> {
     create_dir_all(path).await.map_err(|e| e.to_string().into())

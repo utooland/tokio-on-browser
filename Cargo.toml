@@ -8,33 +8,35 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2.84"
-wasm-bindgen-futures = "0.4.50"
 console_error_panic_hook = { version = "0.1.7" }
+futures = "0.3.31"
+mimalloc = { version = "0.1.48", features = ["extended", "v3"] }
 tokio = { version = "1.47.1", features = [
+  "macros",
   "rt",
   "rt-multi-thread",
-  "macros",
   "tracing",
 ] }
-web-sys = { version = "0.3.77", features = ["console"] }
-tokio-fs-ext = { version = "0.6.0", features = ["opfs_offload", "opfs_watch"]}
+tokio-fs-ext = { version = "0.7.8", features = ["opfs_offload", "opfs_watch"] }
+tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-web = "0.1.3"
-tracing = "0.1.41"
-futures = "0.3.31"
+js-sys = "=0.3.85"
+wasm-bindgen = "=0.2.108"
+wasm-bindgen-futures = "=0.4.58"
+web-sys = { version = "=0.3.85", features = ["console"] }
 
+[patch.crates-io]
+libmimalloc-sys = { git = "https://github.com/utooland/mimalloc_rust.git" }
+mimalloc = { git = "https://github.com/utooland/mimalloc_rust.git" }
+tokio = { git = "https://github.com/utooland/tokio.git" }
 
 [profile.wasm-dev]
 inherits = "release"
 opt-level = 1
-lto = false
+debug = 1
 strip = "none"
+lto = false
+panic = "unwind"
 incremental = true
 codegen-units = 256
-panic = "unwind"
-debug = 1
-
-
-[patch.crates-io]
-tokio = { git = "https://github.com/utooland/tokio.git" }
