@@ -10,6 +10,17 @@ Rust std builds.
 - Latest checked wasm-bindgen CLI support source: `0.2.126`
 - Target: `wasm32-unknown-unknown` with shared memory and atomics
 
+## Regression trigger
+
+This repo worked before upgrading the Rust toolchain from
+`nightly-2025-06-04` to `nightly-2026-05-15`. The upgrade changed the Rust std
+wasm allocator dependency from `dlmalloc 0.2.8` to `dlmalloc 0.2.13`.
+
+The old `dlmalloc 0.2.8` wasm allocator only allocated through `memory.grow`.
+The new `dlmalloc 0.2.13` wasm allocator first tries to donate the
+linker-provided preexisting heap range bounded by `__heap_base` and
+`__heap_end`, then falls back to `memory.grow`.
+
 The same thread transform is still present in `wasm-bindgen-cli-support`
 `0.2.126`: it allocates the wasm-bindgen thread counter and temporary stack page
 starting at the original exported `__heap_base`, then mutates only the
