@@ -10,3 +10,5 @@ npm run install-toolchain
 npm run dev
 npm run start
 ```
+
+This branch is a wasm-bindgen threads repro. See [REPRO.md](./REPRO.md).

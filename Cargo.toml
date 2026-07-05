@@ -8,8 +8,8 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2.84"
-wasm-bindgen-futures = "0.4.50"
+wasm-bindgen = "=0.2.126"
+wasm-bindgen-futures = "=0.4.76"
 console_error_panic_hook = { version = "0.1.7" }
 tokio = { version = "1.47.1", features = [
   "rt",
@@ -17,7 +17,7 @@ tokio = { version = "1.47.1", features = [
   "macros",
   "tracing",
 ] }
-web-sys = { version = "0.3.77", features = ["console"] }
+web-sys = { version = "=0.3.103", features = ["console"] }
 tokio-fs-ext = { version = "0.6.0", features = ["opfs_offload", "opfs_watch"]}
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-web = "0.1.3"
